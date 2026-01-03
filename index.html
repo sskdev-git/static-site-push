@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Enable Safari Notifications</title>
+</head>
+<body>
+  <h2>Safari Notification Setup</h2>
+  <button id="enable">Enable Notifications</button>
+
+  <script>
+    // Replace with your VAPID public key
+    const VAPID_PUBLIC_KEY = "PASTE_YOUR_VAPID_PUBLIC_KEY_HERE";
+
+    function urlBase64ToUint8Array(base64) {
+      const padding = "=".repeat((4 - base64.length % 4) % 4);
+      const base64Safe = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+      return Uint8Array.from(atob(base64Safe), c => c.charCodeAt(0));
+    }
+
+    document.getElementById("enable").onclick = async () => {
+      if (!("serviceWorker" in navigator)) {
+        alert("Service Worker not supported");
+        return;
+      }
+
+      await navigator.serviceWorker.register("sw.js");
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        alert("Permission denied");
+        return;
+      }
+
+      const reg = await navigator.serviceWorker.ready;
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+
+      console.log("COPY THIS JSON:");
+      console.log(JSON.stringify(subscription));
+      alert("Subscription created. Open console and copy JSON.");
+    };
+  </script>
+</body>
+</html>
